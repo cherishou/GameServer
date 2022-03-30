@@ -13,21 +13,60 @@
 #include "ConcurrentQueue.h"
 #include "ConcurrentStack.h"
 
-CoreGlobal Core;
+#include "RefCounting.h"
 
-void ThreadMain()
+class Wraight : public RefCounting
 {
-	while (true)
+public:
+	Wraight() {}
+public:
+	int _hp = 100;
+	int _posX = 0;
+	int _posY = 0;
+};
+
+class Missile : public RefCounting
+{
+public:
+	void SetTarget(Wraight* target)
 	{
-		cout << "Hello I am thread" << LThreadId << endl;
-		this_thread::sleep_for(1s);
+		_target = target;
+		target->AddRef();
 	}
-}
+
+	void Update()
+	{
+		int posX = _target->_posX;
+		int posY = _target->_posY;
+
+		if (_target->_hp == 0)
+		{
+			_target->ReleaseRef();
+			_target = nullptr;
+			return  true;
+		}
+	}
+public:
+	Wraight* _target = nullptr;	
+};
+
 int main()
 {
-	for (int i = 0; i < 5; i++)
+	Wraight* wraight = new Wraight();
+	Missile* missile = new Missile();
+
+	missile->SetTarget(wraight);
+
+	//미사일 맞기전에 레이스가 피격당함 
+	wraight->_hp = 0;
+	delete wraight; //여기서 문제가 발생
+	while (true)
 	{
-		GThreadManager->Launch(ThreadMain);
+		if (missile)
+		{
+			missile->Update();
+		}
 	}
-	GThreadManager->Join();
+
+	delete missile;
 }
