@@ -1,3 +1,4 @@
-﻿  pch.cpp
-  CorePch.cpp
+﻿  CoreGlobal.cpp
+  ThreadManager.cpp
+  코드를 생성하고 있습니다...
   ServerCore.vcxproj -> C:\Users\kcj30\source\repos\Server\Libraries\Debug\ServerCore.lib

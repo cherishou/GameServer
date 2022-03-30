@@ -15,10 +15,11 @@
     <ClCompile Include="GameServer.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="AcoountManager.cpp">
+    <ClCompile Include="RefCounting.cpp" />
+    <ClCompile Include="ConcurrentStack.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="UserManager.cpp">
+    <ClCompile Include="ConcurrentQueue.cpp">
       <Filter>Main</Filter>
     </ClCompile>
   </ItemGroup>
@@ -26,10 +27,11 @@
     <ClInclude Include="pch.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="AcoountManager.h">
+    <ClInclude Include="RefCounting.h" />
+    <ClInclude Include="ConcurrentStack.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="UserManager.h">
+    <ClInclude Include="ConcurrentQueue.h">
       <Filter>Main</Filter>
     </ClInclude>
   </ItemGroup>
