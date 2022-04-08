@@ -14,6 +14,23 @@
 #define WRITE_LOCK_IDX(idx)   WriteLockGuard writeLockGuard_##idx(_locks[idx]);
 #define WRITE_LOCK			  WRITE_LOCK_IDX(0)
 
+
+
+/*
+*					Memory
+*/
+#ifdef  _DEBUG
+#define Xalloc(size)	BaseAllocator::Alloc(size)
+#define Xrelease(ptr)	BaseAllocator::Release(ptr)
+#else
+#define xalloc(size) BaseAllocator::Alloc(size)
+#define xrelease(ptr) BaseAllocator::Release(ptr)
+#endif 
+/*
+* -------------------------
+* CRash
+* -------------------------
+*/
 #define CRASH(cause)						\
 {											\
 uint32* crash = nullptr;					\
@@ -30,3 +47,6 @@ CRASH("ASSERT_CRASH");					\
 __analysis_assume(expr);				\
 }										\
 }							
+
+
+

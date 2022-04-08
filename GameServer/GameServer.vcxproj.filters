@@ -16,23 +16,11 @@
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="RefCounting.cpp" />
-    <ClCompile Include="ConcurrentStack.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="ConcurrentQueue.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="RefCounting.h" />
-    <ClInclude Include="ConcurrentStack.h">
-      <Filter>Main</Filter>
-    </ClInclude>
-    <ClInclude Include="ConcurrentQueue.h">
-      <Filter>Main</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

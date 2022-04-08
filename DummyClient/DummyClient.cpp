@@ -1,79 +1,69 @@
+
 #include "pch.h"
 #include <iostream>
 
-#include <WinSock2.h>
-#include <MSWSock.h>
-#include <WS2tcpip.h>
+#include <thread>
+#include <atomic>
+#include <mutex>
+using namespace std;
 
-#pragma comment(lib, "ws2_32.lib")
+class SpinLock
+{
+public:
+    void lock()
+    {
+
+        //CAS(Compare-And-Swap)
+
+        bool expected = false; // 락을 걸기를 원하는 대상의 현재상태 그러나 현재는 false이다
+        bool desired = true;  // 락이 걸리기를 기대하는 것
+
+        while (_locked.compare_exchange_strong(expected, desired) == false)
+        {
+            expected = false;
+
+            //this_thread::sleep_for(std::chrono::microseconds(100));
+            this_thread::sleep_for(100ms);
+            this_thread::yield(); // yield는 sleep_for의 0ms랑 동일하다.!
+        }
+    }
+    void unlock()
+    {
+
+    }
+private:
+    atomic<bool> _locked = false;
+};
+
+int32 sum = 0;
+mutex m;
+
+void Add()
+{
+    for (int i = 0; i < 1'000'000; i++)
+    {
+        lock_guard<mutex> guard(m);
+        sum++;
+    }
+}
+void Sub()
+{
+    for (int i = 0; i < 1'000'000; i++)
+    {
+        lock_guard<mutex> guard(m);
+        sum--;
+    }
+}
 int main()
 {
-	WSADATA wsaData;
-	if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		return 0;
+    //release 모드는 최적화가 들어간다 
+    volatile int32 a = 1;
+    a = 2;
+    a = 3;
+    a = 4;
 
-	// ad : Address Family (AF_INET = IPv4, AF_INET6 = IPv6)
-	// type : TCP(SOCK_STREAM) VS UDP(SOCK_DGRAM)
-	// protocol : 0
-	// return : descriptor
-	SOCKET clientSocket = ::socket(AF_INET, SOCK_DGRAM, 0);
-	if (clientSocket == INVALID_SOCKET)
-	{
-		int32 errorCode = ::WSAGetLastError();
+    thread t1(Add);
+    thread t2(Sub);
 
-		cout << "Socket ErrorCode : " << errorCode << endl;
-		return 0;
-	}
-
-	SOCKADDR_IN serverAddr;
-	::memset(&serverAddr, 0, sizeof(serverAddr));
-
-	serverAddr.sin_family = AF_INET;
-	::inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-	serverAddr.sin_port = ::htons(7777);   // port 포트 번호 
-	
-
-	if (::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
-	{
-		int32 errorCode = ::WSAGetLastError();
-
-		cout << "Connect ErrorCode : " << errorCode << endl;
-	}
-
-	cout << "Connected To Server" << endl;
-
-	while (true)
-	{
-		char sendBuffer[100] = "Hello world";
-		
-		for (int i = 0; i < 10; i++)
-		{
-			int32 resultCode = ::sendto(clientSocket, sendBuffer, sizeof(sendBuffer), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
-			cout << "Send Data Len : " << sizeof(sendBuffer) << endl;
-		}
-		
-		
-
-		//-------------------------server에서 보낸 것을 recv
-
-		//char recvBuffer[1000];
-
-		//int recvLen = ::recv(clientSocket, recvBuffer, sizeof(recvBuffer), 0);
-
-		////SOCKET_ERROR가 -1인데 0보다 작으면 에러라고 보자!
-		//if (recvLen <= 0)
-		//{
-		//	int32 errCode = ::WSAGetLastError();
-		//	cout << "Rcv ErrorCode : " << errCode << endl;
-		//	return 0;
-		//}
-		//cout << "Rcv Data : " << recvBuffer << endl;
-
-		//this_thread::sleep_for(1s);
-
-	}
-	::closesocket(clientSocket);
-
-	::WSACleanup();
+    cout << sum;
 }
