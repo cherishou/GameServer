@@ -1,69 +1,82 @@
-
 #include "pch.h"
 #include <iostream>
 
-#include <thread>
-#include <atomic>
-#include <mutex>
-using namespace std;
-
-class SpinLock
+void HandleError(const char* cause)
 {
-public:
-    void lock()
-    {
-
-        //CAS(Compare-And-Swap)
-
-        bool expected = false; // 락을 걸기를 원하는 대상의 현재상태 그러나 현재는 false이다
-        bool desired = true;  // 락이 걸리기를 기대하는 것
-
-        while (_locked.compare_exchange_strong(expected, desired) == false)
-        {
-            expected = false;
-
-            //this_thread::sleep_for(std::chrono::microseconds(100));
-            this_thread::sleep_for(100ms);
-            this_thread::yield(); // yield는 sleep_for의 0ms랑 동일하다.!
-        }
-    }
-    void unlock()
-    {
-
-    }
-private:
-    atomic<bool> _locked = false;
-};
-
-int32 sum = 0;
-mutex m;
-
-void Add()
-{
-    for (int i = 0; i < 1'000'000; i++)
-    {
-        lock_guard<mutex> guard(m);
-        sum++;
-    }
+	int32 errCode = ::WSAGetLastError();
+	cout << cause << " ErrorCode : " << errCode << endl;
 }
-void Sub()
-{
-    for (int i = 0; i < 1'000'000; i++)
-    {
-        lock_guard<mutex> guard(m);
-        sum--;
-    }
-}
+
 int main()
 {
-    //release 모드는 최적화가 들어간다 
-    volatile int32 a = 1;
-    a = 2;
-    a = 3;
-    a = 4;
+	WSAData wsaData;
+	if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return 0;
 
-    thread t1(Add);
-    thread t2(Sub);
+	SOCKET clientSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+	if (clientSocket == INVALID_SOCKET)
+		return 0;
 
-    cout << sum;
+	u_long on = 1;
+	if (::ioctlsocket(clientSocket, FIONBIO, &on) == INVALID_SOCKET)
+		return 0;
+
+	SOCKADDR_IN serverAddr;
+	::memset(&serverAddr, 0, sizeof(serverAddr));
+	serverAddr.sin_family = AF_INET;
+	::inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+	serverAddr.sin_port = ::htons(7777);
+
+	// Connect
+	while (true)
+	{
+		if (::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+		{
+			// 원래 블록했어야 했는데... 너가 논블로킹으로 하라며?
+			if (::WSAGetLastError() == WSAEWOULDBLOCK)
+				continue;
+			// 이미 연결된 상태라면 break
+			if (::WSAGetLastError() == WSAEISCONN)
+				break;
+			// Error
+			break;
+		}
+	}
+
+	cout << "Connected to Server!" << endl;
+
+	char sendBuffer[100] = "Hello World";
+	WSAEVENT wsaEvent = ::WSACreateEvent();
+	WSAOVERLAPPED overlapped = {};
+	overlapped.hEvent = wsaEvent;
+
+	// Send
+	while (true)
+	{
+		WSABUF wsaBuf;
+		wsaBuf.buf = sendBuffer;
+		wsaBuf.len = 100;
+
+		DWORD sendLen = 0;
+		DWORD flags = 0;
+
+		if (::WSASend(clientSocket, &wsaBuf, 1, &sendLen, flags, &overlapped, nullptr) == SOCKET_ERROR)
+		{
+			if(::WSAGetLastError() == WSA_IO_PENDING)
+			{
+				//pending
+				::WSAWaitForMultipleEvents(1, &wsaEvent, TRUE, WSA_INFINITE, FALSE);
+				::WSAGetOverlappedResult(clientSocket, &overlapped, &sendLen, FALSE, &flags);
+			}
+		}
+		cout << "Send Data Len = " << sizeof(sendBuffer) << endl;
+
+		
+	}
+
+	// 소켓 리소스 반환
+	::closesocket(clientSocket);
+
+	// 윈속 종료
+	::WSACleanup();
 }

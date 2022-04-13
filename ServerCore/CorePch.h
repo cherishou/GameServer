@@ -14,8 +14,20 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <Windows.h>
+// windows.h 에서 winsock.h인가를 미리 include 하고 있어서
+// winsock2가 먼저와야한다
+#include <winsock2.h>
+
+#include <windows.h>
 #include <iostream>
 using namespace std;
 
+
+#include <mswsock.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+
 #include "Lock.h"
+//#include "ObjectPool.h"
+//#include "TypeCast.h"
+#include "Memory.h"
