@@ -5,6 +5,7 @@
 * 클라의 정보들은 다 session에 넣는다.
 */
 #include "IocpCore.h"
+#include "IocpEvent.h"
 #include "NetAddress.h"
 
 class Session : public IocpObject
@@ -28,7 +29,8 @@ public:
 public:
 	char _recvBuffer[1000];
 private:
-	SOCKET _socket = INVALID_SOCKET;
-	NetAddress _netAddress = {};
+	SOCKET		 _socket = INVALID_SOCKET;
+	NetAddress	 _netAddress = {};
+	Atomic<bool> _connected = false;
 };
 

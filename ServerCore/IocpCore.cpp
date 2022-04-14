@@ -1,27 +1,34 @@
 #include "pch.h"
 #include "IocpCore.h"
 #include "IocpEvent.h"
+
+
+IocpCore GIocpCore;
+
 IocpCore::IocpCore()
 {
 	_iocpHandle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
-
-
 }
 
 IocpCore::~IocpCore()
 {
-	//::CloseHanlde();
+	::CloseHandle(_iocpHandle);
 }
 
-bool IocpCore::Register(IocpObject* iocpObject)
+bool IocpCore::Register(IocpObjectRef iocpObject)
 {
+	//일반적인 상황에서 iocpObject->GetHandle()은 소켓이다.
+	//세션을 넣어줄 수도 있고, 소켓을 넣어줄 수도있고, 
+	//네트워크도 아니어도 사용할 수 있도록 광범위하게 만들어주기 위해서
+	//iocpObject로 관리한다
 	return ::CreateIoCompletionPort(iocpObject->GetHandle(), _iocpHandle,
-		reinterpret_cast<ULONG_PTR>(iocpObject), 0);
+		/*key*/0, 0);
 }
-
+//workerThread가 dispach를 실행해서 일감이 있는지 확인한다.
+// 등록을할 때 레퍼런스 카운팅이 들어가서 ,날아가면안된다.
 bool IocpCore::Dispatch(uint32 timeoutMs)
 {
-	DWORD numOfBytes = 0;
+	DWORD numOfBytes = 0; //전송된 바이트
 	ULONG_PTR key = 0;
 	IocpEvent* iocpEvent = nullptr;
 

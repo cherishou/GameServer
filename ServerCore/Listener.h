@@ -5,6 +5,12 @@
 
 class AcceptEvent;
 
+/*
+* -------------------------
+*		Listener
+* -------------------------
+*/
+
 //Listener를 iocp코어에 등록을 할 것이다.
 class Listener : public IocpObject
 {
@@ -14,12 +20,13 @@ public:
 
 public:
 	/*외부에서 사용*/
-	bool StartACCEPT(NetAddress netAddress);
+	//netAddress를 대상으로 역할을 수행한다.
+	bool StartACCEPT(NetAddress netAddress); //listener가 문지기의 역할을 해라!
 	void CloseSocket();
 public:
 	/*인터페이스 구현 */
-	virtual HANDLE GetHandle() ;
-	virtual void Dispatch(class IocpEvent* iocpEvent, int32 numOfBytes) ;
+	virtual HANDLE GetHandle() override;
+	virtual void Dispatch(class IocpEvent* iocpEvent, int32 numOfBytes) override;
 
 private:
 	/*수신관련*/
@@ -29,5 +36,6 @@ private:
 protected:
 	SOCKET _socket = INVALID_SOCKET;
 	vector<AcceptEvent*> _acceptEvents;
+	ServerServiceRef _service;
 };
 

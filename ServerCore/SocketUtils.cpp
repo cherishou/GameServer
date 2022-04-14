@@ -74,6 +74,11 @@ bool SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
 	return SetSockOpt(socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, listenSocket);
 }
 
+bool SocketUtils::Bind(SOCKET socket, NetAddress netAddr)
+{
+	return SOCKET_ERROR != ::bind(socket, reinterpret_cast<const SOCKADDR*>(&netAddr.GetSockAddr()), sizeof(SOCKADDR_IN));
+}
+
 bool SocketUtils::BindAnyAddress(SOCKET socket, uint16 port)
 {
 	SOCKADDR_IN myAddress;
