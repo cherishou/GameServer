@@ -92,7 +92,7 @@ void Listener::RegisterAccept(AcceptEvent* acceptEvent)
 	DWORD bytesReceived = 0;
 	//AcceptEx 비동기 입출력..
 	if (false == SocketUtils::AcceptEx(_socket, session->GetSocket(),
-		session->_recvBuffer/*처음연결이 맺어질때 버퍼가 필요*/, 0
+		session->_recvBuffer.writePos()/*처음연결이 맺어질때 버퍼가 필요*/, 0
 		, sizeof(SOCKADDR_IN) + 16,
 		sizeof(SOCKADDR_IN) + 16,
 		&bytesReceived, static_cast<LPOVERLAPPED>(acceptEvent)))
@@ -136,5 +136,6 @@ void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 		return;
 	}
 	session->SetNetAddress(NetAddress(sockAddress));
+	session->ProcessConnect();
 	RegisterAccept(acceptEvent);
 }

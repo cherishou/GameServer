@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SendBuffer.h"
 class Session;
 enum class EventType : uint8
 {
@@ -72,4 +73,6 @@ class SendEvent : public IocpEvent
 {
 public:
 	SendEvent() : IocpEvent(EventType::Send) {}
+
+	vector<BYTE> buffer;
 };
