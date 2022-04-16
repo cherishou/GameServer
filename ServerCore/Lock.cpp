@@ -1,8 +1,12 @@
 #include "pch.h"
 #include "Lock.h"
+#include "DeadLockProfiler.h"
 
-void Lock::WriteLock()
+void Lock::WriteLock(const char* name)
 {
+#if _DEBUG
+	GDeadLockProfiler->PushLock(name);
+#endif
 	//동일한 쓰레드가 소유하고 있다면 무조건 송겅
 	const int32 lockThreadId = (_lockFlag.load() & WRITE_THREAD_MASK) >> 16;
 	if (LThreadId == lockThreadId)
@@ -40,8 +44,11 @@ void Lock::WriteLock()
 
 }
 
-void Lock::WriteUnlock()
+void Lock::WriteUnlock(const char* name)
 {
+#if _DEBUG
+	GDeadLockProfiler->PopLock(name);
+#endif
 	//ReadLock 다 풀기전에는 WriteUnLock불가능.
 	if (_lockFlag.load() & WRITE_THREAD_MASK != 0)
 		CRASH("INVALID_UNLOCK_ORDER");
@@ -54,8 +61,11 @@ void Lock::WriteUnlock()
 }
 
 
-void Lock::ReadLock()
+void Lock::ReadLock(const char* name)
 {
+#if _DEBUG
+	GDeadLockProfiler->PushLock(name);
+#endif
 	const int64 beginTick = ::GetTickCount64();
 
 	// 동일한 쓰레드가 소유하고 있다면 무조건 성공
@@ -86,8 +96,12 @@ void Lock::ReadLock()
 	}
 }
 
-void Lock::ReadUnlock()
+void Lock::ReadUnlock(const char* name)
 {
+#if _DEBUG
+	GDeadLockProfiler->PopLock(name);
+#endif
+
 	if ((_lockFlag.fetch_sub(1) & REDA_COUNT_MASK) == 0)
 	{
 		return;
